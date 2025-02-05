@@ -39,7 +39,7 @@ RenderWindow::RenderWindow(QVulkanWindow *w, bool msaa)
         }
     }
 
-    mObjects.push_back(new TriangleSurface("vertex.txt"));
+    //mObjects.push_back(new TriangleSurface("vertex1.txt"));
     mObjects.push_back(new VKGraph("vertex2.txt"));
     mObjects.push_back(new TriangleSurface("vertex3.txt"));
 }
@@ -358,7 +358,11 @@ void RenderWindow::startNextFrame()
         mDeviceFunctions->vkCmdDraw(cmdBuf, (*it)->mVertices.size(), 1, 0, 0);
     }
     mDeviceFunctions->vkCmdEndRenderPass(cmdBuf);
-
+    for(auto it=mObjects.begin(); it!=mObjects.end(); it++)
+    {
+        //rotates
+        (*it)->rotate(0.1,0,1,0);
+    }
 
     mWindow->frameReady();
     mWindow->requestUpdate(); // render continuously, throttled by the presentation rate

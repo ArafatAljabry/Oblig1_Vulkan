@@ -17,6 +17,9 @@ public:
     VkPrimitiveTopology mTopology{VK_PRIMITIVE_TOPOLOGY_LINE_LIST};
 
     QMatrix4x4 mMatrix;
+
+    void rotate(float t, float x, float y, float z);
+
 };
 
 #endif // VISUALOBJECT_H
