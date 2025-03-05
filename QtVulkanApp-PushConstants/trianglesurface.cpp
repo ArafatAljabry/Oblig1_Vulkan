@@ -12,6 +12,9 @@ TriangleSurface::TriangleSurface() : VisualObject() {
     mVertices.push_back(v3);
     mVertices.push_back(v2);
     mVertices.push_back(v4);
+
+    //Skalerer ned kvadrat i eget kordinatsystem/frame
+    mMatrix.scale(0.25f);
 }
 
 TriangleSurface::TriangleSurface(const std::string& filename) : VisualObject()

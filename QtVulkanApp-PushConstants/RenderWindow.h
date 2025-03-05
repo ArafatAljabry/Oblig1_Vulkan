@@ -5,6 +5,7 @@
 #include  "VKTriangle.h"
 #include "trianglesurface.h"
 #include "vkgraph.h"
+#include "camera.h"
 
 class RenderWindow : public QVulkanWindowRenderer
 {
@@ -61,6 +62,8 @@ protected:
     VkPipeline mPipeline{ VK_NULL_HANDLE };
 
 private:
+    friend class VulkanWindow;
+    Camera mCamera;
     //void updateUniformBuffer (const QMatrix4x4& modelMatrix, int currentframe);
     VkTriangle mTriangle;
     TriangleSurface mSurface;

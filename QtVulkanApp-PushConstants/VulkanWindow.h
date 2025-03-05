@@ -13,6 +13,8 @@ class VulkanWindow : public QVulkanWindow
 {
     Q_OBJECT
 
+    QVulkanWindowRenderer* mRenderWindow;
+
 public:
     VulkanWindow();
 

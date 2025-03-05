@@ -41,7 +41,8 @@ RenderWindow::RenderWindow(QVulkanWindow *w, bool msaa)
 
     //mObjects.push_back(new TriangleSurface("vertex1.txt"));
     mObjects.push_back(new VKGraph("vertex2.txt"));
-    mObjects.push_back(new TriangleSurface("vertex3.txt"));
+   // mObjects.push_back(new TriangleSurface("vertex3.txt"));
+    mObjects.push_back(new TriangleSurface());
 }
 
 void RenderWindow::initResources()
@@ -282,23 +283,13 @@ void RenderWindow::initSwapChainResources()
 
     // Projection matrix - how the scene will be projected into the render window
 
-    //This function is called at startup and when the app window is resized
-    mProjectionMatrix.setToIdentity();
     //find the size of the window
     const QSize sz = mWindow->swapChainImageSize();
+    mCamera.perspective(25.0f,sz.width()/(float)sz.height(),0.01f,100.0f);
+    mCamera.translate(0,0,-4); // Camera is -4 away from origo
 
-    //               vertical angle ,   aspect ratio                    near-  , far plane
-    /**PLAY WITH THIS**/
-    mProjectionMatrix.perspective(25.0f,          sz.width() / (float) sz.height(), 0.01f, 100.0f);
-    //Camera is -4 away from origo
-    /**PLAY WITH THIS**/
-    mProjectionMatrix.translate(0, 0, -10);
 
-    //Flip projection because of Vulkan's -Y axis
-    mProjectionMatrix.scale(1.0f, -1.0f, 1.0);
 
-    //Rotation at start
-    mProjectionMatrix.rotate(60,-1,-1,0);
 
 }
 
@@ -354,10 +345,12 @@ void RenderWindow::startNextFrame()
     for (auto it=mObjects.begin(); it!=mObjects.end(); it++)
     {
         mDeviceFunctions->vkCmdBindVertexBuffers(cmdBuf, 0, 1, &(*it)->mBuffer, &vbOffset);
-        setModelMatrix(mProjectionMatrix*(*it)->mMatrix);
+        setModelMatrix(mCamera.cMatrix()*(*it)->mMatrix);
         mDeviceFunctions->vkCmdDraw(cmdBuf, (*it)->mVertices.size(), 1, 0, 0);
     }
     mDeviceFunctions->vkCmdEndRenderPass(cmdBuf);
+
+    //Rotates the object in place every frame
     for(auto it=mObjects.begin(); it!=mObjects.end(); it++)
     {
         //rotates
