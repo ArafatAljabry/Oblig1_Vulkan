@@ -2,6 +2,7 @@
 #define VULKANWINDOW_H
 
 #include <QVulkanWindow>
+#include "visualobject.h"
 
 /*The QVulkanWindow subclass reimplements the factory function QVulkanWindow::createRenderer().
 This returns a new instance of the QVulkanWindowRenderer subclass.
@@ -14,11 +15,15 @@ class VulkanWindow : public QVulkanWindow
     Q_OBJECT
 
     QVulkanWindowRenderer* mRenderWindow;
+    int mIndex{0};
+    VisualObject* mSelectedObject;
+
 
 public:
     VulkanWindow();
 
     QVulkanWindowRenderer* createRenderer() override;
+    QVulkanWindowRenderer* getRendererWindow() const {return mRenderWindow;}
 
 signals:
     void frameQueued(int colorValue);

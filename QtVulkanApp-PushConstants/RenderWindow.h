@@ -33,6 +33,7 @@ public:
 
     //Get Vulkan info - just for fun
     void getVulkanHWInfo();
+    std::vector<VisualObject*>& getObjects(){return mObjects;}
 
 protected:
 

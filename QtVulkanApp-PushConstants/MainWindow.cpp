@@ -1,4 +1,8 @@
 #include "MainWindow.h"
+#include "trianglesurface.h"
+#include "VulkanWindow.h"
+#include "RenderWindow.h"
+
 #include <QApplication>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -7,7 +11,10 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QTabWidget>
-#include "VulkanWindow.h"
+
+#include <QMenuBar>
+#include <QFileDialog>
+
 
 MainWindow::MainWindow(VulkanWindow *vw, QPlainTextEdit *logWidget)
     : mVulkanWindow(vw)
@@ -36,6 +43,7 @@ MainWindow::MainWindow(VulkanWindow *vw, QPlainTextEdit *logWidget)
 
     //Makes the layout of the program, adding items we have made
     QVBoxLayout *layout = new QVBoxLayout;
+    layout->addWidget(createMenu());
     layout->addWidget(vulkanWindowWrapper, 7);
     mInfoTab = new QTabWidget(this);
     mInfoTab->addTab(mLogWidget, tr("Debug Log"));
@@ -73,3 +81,30 @@ void MainWindow::onScreenGrabRequested()
     if (fd.exec() == QDialog::Accepted)
         img.save(fd.selectedFiles().first());
 }
+QMenuBar *MainWindow::createMenu(){
+
+    menuBar = new QMenuBar(this);
+    fileMenu = new QMenu(tr("&File"), this);
+    openFileAction = fileMenu->addAction(tr("&Open file..."));
+    exitAction = fileMenu->addAction(tr("E&xit"));
+    menuBar->addMenu(fileMenu);
+    menuBar->setVisible(true);
+    //
+    connect(openFileAction,SIGNAL(triggered()),this,SLOT(openFile()));
+
+    return menuBar;
+}
+void MainWindow::openFile()
+{
+    auto filnavn = QFileDialog::getOpenFileName(this);
+
+    if(!filnavn.isEmpty())
+    {
+        TriangleSurface* surf = new TriangleSurface(filnavn.toStdString());
+        auto rw = dynamic_cast<RenderWindow*>(mVulkanWindow->getRendererWindow());
+        rw->getObjects().push_back(surf);
+        rw->releaseResources();
+        rw->initResources();
+    }
+}
+

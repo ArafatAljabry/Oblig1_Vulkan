@@ -40,7 +40,7 @@ RenderWindow::RenderWindow(QVulkanWindow *w, bool msaa)
     }
 
     //mObjects.push_back(new TriangleSurface("vertex1.txt"));
-    mObjects.push_back(new VKGraph("vertex2.txt"));
+    //mObjects.push_back(new VKGraph("vertex2.txt"));
    // mObjects.push_back(new TriangleSurface("vertex3.txt"));
     mObjects.push_back(new TriangleSurface());
 }

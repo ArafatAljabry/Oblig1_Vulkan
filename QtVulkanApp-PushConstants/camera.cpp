@@ -31,6 +31,11 @@ void Camera::translate(float dx, float dy, float dz)
     mViewMatrix.translate(dx,dy,dz);
 }
 
+void Camera::rotate(float t, float x, float y, float z)
+{
+    mViewMatrix.rotate(t,x,y,z);
+}
+
 QMatrix4x4 Camera::cMatrix()
 {
     return mProjectionMatrix* mViewMatrix;
