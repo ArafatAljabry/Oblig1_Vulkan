@@ -1,7 +1,8 @@
 #include "visualobject.h"
 
-VisualObject::VisualObject() {}
-
+VisualObject::VisualObject() {
+     mMatrix.setToIdentity();
+}
 
 void VisualObject::rotate(float t, float x, float y, float z)
 {

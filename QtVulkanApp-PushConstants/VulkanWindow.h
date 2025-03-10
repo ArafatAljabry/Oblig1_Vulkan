@@ -3,6 +3,7 @@
 
 #include <QVulkanWindow>
 #include "visualobject.h"
+#include "input.h"
 
 /*The QVulkanWindow subclass reimplements the factory function QVulkanWindow::createRenderer().
 This returns a new instance of the QVulkanWindowRenderer subclass.
@@ -14,17 +15,25 @@ class VulkanWindow : public QVulkanWindow
 {
     Q_OBJECT
 
-    QVulkanWindowRenderer* mRenderWindow;
-    int mIndex{0};
-    VisualObject* mSelectedObject;
+private:
+    void setCameraSpeed(float value);
 
+    float mCameraSpeed{0.005f};
+    float mCameraRotateSpeed{-0.1f};
+    int mMouseXlast {0}; // for mouse rotate input
+    int mMouseYlast {0};
+    Input mInput;
+
+    class Camera* mCamera{nullptr};
 
 public:
     VulkanWindow();
 
     QVulkanWindowRenderer* createRenderer() override;
     QVulkanWindowRenderer* getRendererWindow() const {return mRenderWindow;}
+    void setSelectedObject(VisualObject* object){ mSelectedObject = object;}
 
+    void handleInput();
 signals:
     void frameQueued(int colorValue);
 
@@ -34,11 +43,18 @@ protected:
     // Uncomment to use (you also have to make the definitions of
     // these functions in the cpp-file to use them of course!)
     //
-    //    void mousePressEvent(QMouseEvent *event) override{}
-    //    void mouseMoveEvent(QMouseEvent *event) override{}
-    void keyPressEvent(QKeyEvent *event) override;              //the only one we use now
-    //    void keyReleaseEvent(QKeyEvent *event) override{}
-    //    void wheelEvent(QWheelEvent *event) override{}
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
+    void keyPressEvent(QKeyEvent *event) override;
+              //the only one we use now
+    void keyReleaseEvent(QKeyEvent *event) override;
+    void wheelEvent(QWheelEvent *event) override;
+
+    QVulkanWindowRenderer* mRenderWindow;
+    int mIndex{0};
+    VisualObject* mSelectedObject{nullptr};
+
 
 };
 #endif // VULKANWINDOW_H

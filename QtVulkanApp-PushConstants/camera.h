@@ -11,6 +11,11 @@ private:
     QMatrix4x4 mProjectionMatrix{};
     QMatrix4x4 mViewMatrix{};
 
+    QVector3D mPosition{0.0f, 0.0f,0.0f};
+    float mPitch{0.0f};
+    float mYaw{0.0f};
+
+    float mSpeed{0.0f};
 public:
     Camera();
     ~Camera();
@@ -19,7 +24,15 @@ public:
     void perspective(int degrees, double aspect, double nearplane, double farplane);
     void lookAt(const QVector3D& eye, const QVector3D& at, const QVector3D& up);
 
-    //void update()
+    void setSpeed(float speed);
+    void moveRight(float delta);
+    void updateHeight(float deltaHeight);
+
+    void setPosition(const QVector3D& position);
+    void update();
+    void pitch(float degrees);
+    void yaw(float degrees);
+
     void translate(float dx, float dy, float dz);
     void rotate(float t, float x, float y, float z);
     QMatrix4x4 cMatrix();

@@ -17,6 +17,11 @@ qt_add_executable(QtVulkanApp
     trianglesurface.h trianglesurface.cpp
     vkgraph.h vkgraph.cpp
     camera.h camera.cpp
+    input.h
+    worldaxis.h worldaxis.cpp
+    box.h box.cpp
+    plane.h plane.cpp
+
 )
 # Define the shader files
 set(SHADER_FILES

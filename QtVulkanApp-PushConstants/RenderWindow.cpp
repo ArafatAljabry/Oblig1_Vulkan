@@ -1,6 +1,11 @@
 #include "RenderWindow.h"
 #include <QVulkanFunctions>
 #include <QFile>
+#include "VulkanWindow.h"
+#include "WorldAxis.h"
+#include "box.h"
+#include "plane.h"
+
 
 
 // Hardcoded mesh for now. Will be put in its own class soon!
@@ -42,7 +47,26 @@ RenderWindow::RenderWindow(QVulkanWindow *w, bool msaa)
     //mObjects.push_back(new TriangleSurface("vertex1.txt"));
     //mObjects.push_back(new VKGraph("vertex2.txt"));
    // mObjects.push_back(new TriangleSurface("vertex3.txt"));
-    mObjects.push_back(new TriangleSurface());
+    //mObjects.push_back(new TriangleSurface());
+    mObjects.push_back(new WorldAxis());
+    mObjects.push_back(new box());
+    mObjects.push_back(new plane());
+    //Gir objektet navn
+    //mObjects.at(0)->setName("surf");
+    mObjects.at(0)->setName("axis");
+    mObjects.at(1)->setName("square");
+    mObjects.at(2)->setName("plane");
+
+    //Legger inn i map
+    for(auto it = mObjects.begin();it!=mObjects.end();it++)
+    {
+        mMap.insert(std::pair<std::string,VisualObject*>{(*it)->getName(),*it} );
+    }
+
+      mCamera.setPosition(QVector3D(-1,-1,-40)); // Camera is -4 away from origo
+
+
+      mVulkanWindow = dynamic_cast<VulkanWindow*>(w);
 }
 
 void RenderWindow::initResources()
@@ -56,225 +80,180 @@ void RenderWindow::initResources()
     change so one buffer is sufficient regardless of the value of
     QVulkanWindow::CONCURRENT_FRAME_COUNT. */
 
-    const int concurrentFrameCount = mWindow->concurrentFrameCount(); // 2 on Oles Machine
+    // const int concurrentFrameCount = mWindow->concurrentFrameCount(); // 2 on Oles Machine
     const VkPhysicalDeviceLimits *pdevLimits = &mWindow->physicalDeviceProperties()->limits;
     const VkDeviceSize uniAlign = pdevLimits->minUniformBufferOffsetAlignment;
-	qDebug("uniform buffer offset alignment is %u", (uint)uniAlign); //64 on Oles machine
+    qDebug("uniform buffer offset alignment is %u", (uint)uniAlign); //64 on Oles machine
 
-    VkBufferCreateInfo bufferInfo{};
-	memset(&bufferInfo, 0, sizeof(bufferInfo)); //Clear out the memory
-    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO; // Set the structure type
-
-    for(auto it = mObjects.begin(); it != mObjects.end(); it++)
+    /// Dag 240125: Create correct buffers for all objects in mObjects with createBuffer() function
+    for (auto it=mObjects.begin(); it!=mObjects.end(); it++)
     {
-        createBuffer(logicalDevice,uniAlign, *it);
+        createBuffer(logicalDevice, uniAlign, *it);
     }
 
-    // Layout is just the vertex data
-    // start offset aligned to uniAlign.
-    const VkDeviceSize vertexAllocSize = aligned(mTriangle.getVertices().size()*sizeof(vertex),uniAlign);
-	bufferInfo.size = vertexAllocSize; //One vertex buffer (we don't use Uniform buffer in this example)
-	bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT; // Set the usage vertex buffer (not using Uniform buffer in this example)
-
-    VkResult err = mDeviceFunctions->vkCreateBuffer(logicalDevice, &bufferInfo, nullptr, &mBuffer);
-    if (err != VK_SUCCESS)
-        qFatal("Failed to create buffer: %d", err);
-
-    VkMemoryRequirements memReq;
-    mDeviceFunctions->vkGetBufferMemoryRequirements(logicalDevice, mBuffer, &memReq);
-
-    VkMemoryAllocateInfo memAllocInfo = {
-        VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-        nullptr,
-        memReq.size,
-        mWindow->hostVisibleMemoryIndex()
-    };
-
-    err = mDeviceFunctions->vkAllocateMemory(logicalDevice, &memAllocInfo, nullptr, &mBufferMemory);
-    if (err != VK_SUCCESS)
-        qFatal("Failed to allocate memory: %d", err);
-
-    err = mDeviceFunctions->vkBindBufferMemory(logicalDevice, mBuffer, mBufferMemory, 0);
-    if (err != VK_SUCCESS)
-        qFatal("Failed to bind buffer memory: %d", err);
-
-    quint8* p{nullptr};
-    err = mDeviceFunctions->vkMapMemory(logicalDevice, mBufferMemory, 0, memReq.size, 0, reinterpret_cast<void **>(&p));
-    if (err != VK_SUCCESS)
-        qFatal("Failed to map memory: %d", err);
-    memcpy(p,  mTriangle.getVertices().data(),mTriangle.getVertices().size()*sizeof(vertex));
-    mDeviceFunctions->vkUnmapMemory(logicalDevice, mBufferMemory);
-
     /********************************* Vertex layout: *********************************/
-
-    //The size of each vertex to be passed to the shader
-    VkVertexInputBindingDescription vertexBindingDesc = {
-        0, // binding - has to match that in VkVertexInputAttributeDescription and startNextFrame()s m_devFuncs->vkCmdBindVertexBuffers
-        sizeof(vertex), // stride account for X, Y, Z, R, G, B
-        VK_VERTEX_INPUT_RATE_VERTEX
-    };
+    VkVertexInputBindingDescription vertexBindingDesc{};    //Updated to a more common way to write it
+    vertexBindingDesc.binding = 0;
+    vertexBindingDesc.stride = sizeof(vertex);
+    vertexBindingDesc.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;      //always this when not using instanced data
 
     /********************************* Shader bindings: *********************************/
     //Descritpion of the attributes used for vertices in the shader
-    VkVertexInputAttributeDescription vertexAttrDesc[] = {
-        { // position
-            0, // location has to correspond to the layout(location = x) in the shader
-            0, // binding
-            VK_FORMAT_R32G32B32_SFLOAT,
-            0
-        },
-        { // color
-            1, // location has to correspond to the layout(location = x) in the shader
-            0, // binding
-            VK_FORMAT_R32G32B32_SFLOAT,
-            3 * sizeof(float) // offset to account for X, Y, Z
-        }
-    };
+    VkVertexInputAttributeDescription vertexAttrDesc[2];    //Updated to a more common way to write it
+    vertexAttrDesc[0].location = 0;
+    vertexAttrDesc[0].binding = 0;
+    vertexAttrDesc[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+    vertexAttrDesc[0].offset = 0;
 
-    VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
+    vertexAttrDesc[1].location = 1;
+    vertexAttrDesc[1].binding = 0;
+    vertexAttrDesc[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+    vertexAttrDesc[1].offset = 3 * sizeof(float);
+
+    VkPipelineVertexInputStateCreateInfo vertexInputInfo{};	    // C++11: {} is the same as memset(&bufferInfo, 0, sizeof(bufferInfo));
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     vertexInputInfo.pNext = nullptr;
     vertexInputInfo.flags = 0;
     vertexInputInfo.vertexBindingDescriptionCount = 1;
     vertexInputInfo.pVertexBindingDescriptions = &vertexBindingDesc;
-	vertexInputInfo.vertexAttributeDescriptionCount = 2; // position and color
+    vertexInputInfo.vertexAttributeDescriptionCount = 2; // position and color
     vertexInputInfo.pVertexAttributeDescriptions = vertexAttrDesc;
+    /***********/
 
-	// Pipeline cache - supposed to increase performance
-    VkPipelineCacheCreateInfo pipelineCacheInfo;
-    memset(&pipelineCacheInfo, 0, sizeof(pipelineCacheInfo));
+    // Pipeline cache - supposed to increase performance
+    VkPipelineCacheCreateInfo pipelineCacheInfo{};
     pipelineCacheInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
-    err = mDeviceFunctions->vkCreatePipelineCache(logicalDevice, &pipelineCacheInfo, nullptr, &mPipelineCache);
-    if (err != VK_SUCCESS)
-        qFatal("Failed to create pipeline cache: %d", err);
+    VkResult result = mDeviceFunctions->vkCreatePipelineCache(logicalDevice, &pipelineCacheInfo, nullptr, &mPipelineCache);
+    if (result != VK_SUCCESS)
+        qFatal("Failed to create pipeline cache: %d", result);
 
     // Pipeline layout
-    
-    // OEF: PushConstants update - set up the push constant info
-    VkPushConstantRange pushConstantRange{
-        VK_SHADER_STAGE_VERTEX_BIT,
-        0,
-		16 * sizeof(float) // 16 floats for the model matrix
-    };
+    // Set up the push constant info
+    VkPushConstantRange pushConstantRange{};    //Updated to more common way to write it
+    pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT; // | VK_SHADER_STAGE_FRAGMENT_BIT;
+    pushConstantRange.offset = 0;
+    pushConstantRange.size = 19 * sizeof(float); // 16 floats for the model matrix + 3 for color
 
-    VkPipelineLayoutCreateInfo pipelineLayoutInfo;
-    memset(&pipelineLayoutInfo, 0, sizeof(pipelineLayoutInfo));
+    VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     pipelineLayoutInfo.setLayoutCount = 0;
-	pipelineLayoutInfo.pushConstantRangeCount = 1;  // OEF: PushConstants update
-	pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange; // OEF: PushConstants update
-    err = mDeviceFunctions->vkCreatePipelineLayout(logicalDevice, &pipelineLayoutInfo, nullptr, &mPipelineLayout);
-    if (err != VK_SUCCESS)
-        qFatal("Failed to create pipeline layout: %d", err);
+    pipelineLayoutInfo.pushConstantRangeCount = 1;  // OEF: PushConstants update
+    pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange; // OEF: PushConstants update
+    result = mDeviceFunctions->vkCreatePipelineLayout(logicalDevice, &pipelineLayoutInfo, nullptr, &mPipelineLayout);
+    if (result != VK_SUCCESS)
+        qFatal("Failed to create pipeline layout: %d", result);
 
     /********************************* Create shaders *********************************/
-    //Creates our actuall shader modules
+    //Creates our actual shader modules
     VkShaderModule vertShaderModule = createShader(QStringLiteral(":/color_vert.spv"));
     VkShaderModule fragShaderModule = createShader(QStringLiteral(":/color_frag.spv"));
 
-    // Graphics pipeline
-    VkGraphicsPipelineCreateInfo pipelineInfo;
-    memset(&pipelineInfo, 0, sizeof(pipelineInfo));
+    //Updated to more common way to write it:
+    VkPipelineShaderStageCreateInfo vertShaderCreateInfo{};
+    vertShaderCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    vertShaderCreateInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+    vertShaderCreateInfo.module = vertShaderModule;
+    vertShaderCreateInfo.pName = "main";                // start function in shader
+
+    VkPipelineShaderStageCreateInfo fragShaderCreateInfo{};
+    fragShaderCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    fragShaderCreateInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+    fragShaderCreateInfo.module = fragShaderModule;
+    fragShaderCreateInfo.pName = "main";                // start function in shader
+
+    VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderCreateInfo, fragShaderCreateInfo };
+
+    /*********************** Graphics pipeline ********************************/
+    VkGraphicsPipelineCreateInfo pipelineInfo{};    //Will use this variable a lot in the next 100s of lines
     pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-
-    VkPipelineShaderStageCreateInfo shaderStages[2] = {
-        {
-            VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-            nullptr,
-            0,
-            VK_SHADER_STAGE_VERTEX_BIT,
-            vertShaderModule,
-            "main",
-            nullptr
-        },
-        {
-            VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-            nullptr,
-            0,
-            VK_SHADER_STAGE_FRAGMENT_BIT,
-            fragShaderModule,
-            "main",
-            nullptr
-        }
-    };
-
     pipelineInfo.stageCount = 2; //vertex and fragment shader
     pipelineInfo.pStages = shaderStages;
     pipelineInfo.pVertexInputState = &vertexInputInfo;
 
-    VkPipelineInputAssemblyStateCreateInfo ia;
-    memset(&ia, 0, sizeof(ia));
-    ia.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-    ia.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-    pipelineInfo.pInputAssemblyState = &ia;
-
-    // The viewport and scissor will be set dynamically via vkCmdSetViewport/Scissor.
+    // The viewport and scissor will be set dynamically via vkCmdSetViewport/Scissor in setRenderPassParameters().
     // This way the pipeline does not need to be touched when resizing the window.
-    VkPipelineViewportStateCreateInfo vp;
-    memset(&vp, 0, sizeof(vp));
-    vp.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-    vp.viewportCount = 1;
-    vp.scissorCount = 1;
-    pipelineInfo.pViewportState = &vp;
+    VkPipelineViewportStateCreateInfo viewport{};
+    viewport.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+    viewport.viewportCount = 1;
+    viewport.scissorCount = 1;
+    pipelineInfo.pViewportState = &viewport;
 
-    VkPipelineRasterizationStateCreateInfo rs;
-    memset(&rs, 0, sizeof(rs));
-    rs.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-    rs.polygonMode = VK_POLYGON_MODE_FILL;
-    rs.cullMode = VK_CULL_MODE_NONE; // we want the back face as well
-    rs.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-    rs.lineWidth = 1.0f;
-    pipelineInfo.pRasterizationState = &rs;
+    // **** Input Assembly **** - describes how primitives are assembled in the Graphics pipeline
+    VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
+    inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+    inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;       //Draw triangles
+    inputAssembly.primitiveRestartEnable = VK_FALSE;                    //Allow strips to be connected, not used in TriangleList
+    pipelineInfo.pInputAssemblyState = &inputAssembly;
 
-    VkPipelineMultisampleStateCreateInfo ms;
-    memset(&ms, 0, sizeof(ms));
-    ms.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-    // Enable multisampling.
-    ms.rasterizationSamples = mWindow->sampleCountFlagBits();
-    pipelineInfo.pMultisampleState = &ms;
+    // **** Rasterizer **** - takes the geometry and turns it into fragments
+    VkPipelineRasterizationStateCreateInfo rasterization{};
+    rasterization.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+    rasterization.polygonMode = VK_POLYGON_MODE_FILL;           // VK_POLYGON_MODE_LINE will make a wireframe;
+    rasterization.cullMode = VK_CULL_MODE_NONE;                 // VK_CULL_MODE_BACK_BIT will cull backsides
+    rasterization.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;  // Front face is counter clockwise - could be clockwise with VK_FRONT_FACE_CLOCKWISE
+    rasterization.lineWidth = 1.0f;                             // Not important for VK_POLYGON_MODE_FILL
+    pipelineInfo.pRasterizationState = &rasterization;
 
-    VkPipelineDepthStencilStateCreateInfo ds;
-    memset(&ds, 0, sizeof(ds));
-    ds.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    ds.depthTestEnable = VK_TRUE;
-    ds.depthWriteEnable = VK_TRUE;
-    ds.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
-    pipelineInfo.pDepthStencilState = &ds;
+    // Enable multisampling
+    VkPipelineMultisampleStateCreateInfo multisample{};
+    multisample.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+    multisample.rasterizationSamples = mWindow->sampleCountFlagBits();
+    pipelineInfo.pMultisampleState = &multisample;
 
-    VkPipelineColorBlendStateCreateInfo cb;
-    memset(&cb, 0, sizeof(cb));
-    cb.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-    // no blend, write out all of rgba
-    VkPipelineColorBlendAttachmentState att;
-    memset(&att, 0, sizeof(att));
-    att.colorWriteMask = 0xF;
-    cb.attachmentCount = 1;
-    cb.pAttachments = &att;
-    pipelineInfo.pColorBlendState = &cb;
+    // **** Color Blending **** -
+    // how to blend the color of a fragment that is already in the framebuffer with the color of the fragment being added
 
-    VkDynamicState dynEnable[] = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
-    VkPipelineDynamicStateCreateInfo dyn;
-    memset(&dyn, 0, sizeof(dyn));
-    dyn.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-    dyn.dynamicStateCount = sizeof(dynEnable) / sizeof(VkDynamicState);
-    dyn.pDynamicStates = dynEnable;
-    pipelineInfo.pDynamicState = &dyn;
+    VkPipelineColorBlendAttachmentState colorBlendAttachment{}; // Need this struct for ColorBlending CreateInfo
+    colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT
+                                          | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;  // Colors to apply blending to - was hardcoded to 0xF;
+
+    VkPipelineColorBlendStateCreateInfo colorBlend{};
+    colorBlend.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+    colorBlend.attachmentCount = 1;                             // the one we made above
+    colorBlend.pAttachments = &colorBlendAttachment;
+    pipelineInfo.pColorBlendState = &colorBlend;                // no blending for now, write out all of rgba
+
+    // **** Depth Stencil ****
+    VkPipelineDepthStencilStateCreateInfo depthStencil{};
+    depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+    depthStencil.depthTestEnable = VK_TRUE;
+    depthStencil.depthWriteEnable = VK_TRUE;
+    depthStencil.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
+    pipelineInfo.pDepthStencilState = &depthStencil;
+
+    // **** Dynamic State **** - dynamic states can be changed without recreating the pipeline
+    VkDynamicState dynamicEnable[] = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
+    VkPipelineDynamicStateCreateInfo dynamic{};
+    dynamic.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+    dynamic.dynamicStateCount = sizeof(dynamicEnable) / sizeof(VkDynamicState);
+    dynamic.pDynamicStates = dynamicEnable;
+    pipelineInfo.pDynamicState = &dynamic;
 
     pipelineInfo.layout = mPipelineLayout;
     pipelineInfo.renderPass = mWindow->defaultRenderPass();
 
-    err = mDeviceFunctions->vkCreateGraphicsPipelines(logicalDevice, mPipelineCache, 1, &pipelineInfo, nullptr, &mPipeline);
-    if (err != VK_SUCCESS)
-        qFatal("Failed to create graphics pipeline: %d", err);
+    result = mDeviceFunctions->vkCreateGraphicsPipelines(logicalDevice, mPipelineCache, 1, &pipelineInfo, nullptr, &mPipeline1);
+    if (result != VK_SUCCESS)
+        qFatal("Failed to create graphics pipeline: %d", result);
 
+    //Making a pipeline for drawing lines
+    mPipeline2 = mPipeline1;                                    // reusing most of the settings from the first pipeline
+    inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;   // draw lines
+    rasterization.polygonMode = VK_POLYGON_MODE_FILL;           // VK_POLYGON_MODE_LINE will make a wireframe; VK_POLYGON_MODE_FILL
+    rasterization.lineWidth = 5.0f;
+    pipelineInfo.pInputAssemblyState = &inputAssembly;
+    result = mDeviceFunctions->vkCreateGraphicsPipelines(logicalDevice, mPipelineCache, 1, &pipelineInfo, nullptr, &mPipeline2);
+    if (result != VK_SUCCESS)
+        qFatal("Failed to create graphics pipeline: %d", result);
+
+
+    // Destroying the shader modules, we won't need them anymore after the pipeline is created
     if (vertShaderModule)
         mDeviceFunctions->vkDestroyShaderModule(logicalDevice, vertShaderModule, nullptr);
     if (fragShaderModule)
         mDeviceFunctions->vkDestroyShaderModule(logicalDevice, fragShaderModule, nullptr);
 
-    qDebug("\n ***************************** initResources finished ******************************************* \n");
-
-	getVulkanHWInfo(); // if you want to get info about the Vulkan hardware
+    getVulkanHWInfo(); // if you want to get info about the Vulkan hardware
 }
 
 void RenderWindow::initSwapChainResources()
@@ -286,7 +265,7 @@ void RenderWindow::initSwapChainResources()
     //find the size of the window
     const QSize sz = mWindow->swapChainImageSize();
     mCamera.perspective(25.0f,sz.width()/(float)sz.height(),0.01f,100.0f);
-    mCamera.translate(0,0,-4); // Camera is -4 away from origo
+
 
 
 
@@ -295,67 +274,34 @@ void RenderWindow::initSwapChainResources()
 
 void RenderWindow::startNextFrame()
 {
-    VkDevice dev = mWindow->device();
-    VkCommandBuffer cmdBuf = mWindow->currentCommandBuffer();
-    const QSize sz = mWindow->swapChainImageSize();
+    //OEF: Handeling input from keyboard and mouse is done in VulkanWindow
+    //Has to be done each frame to get smooth movement
+    mVulkanWindow->handleInput();
+    mCamera.update();               //input can have moved the camera
 
-    //Backtgound color of the render window - dark grey
-    VkClearColorValue clearColor = {{ 0.3, 0.3, 0.3, 1 }};
+    VkCommandBuffer commandBuffer = mWindow->currentCommandBuffer();
 
-    VkClearDepthStencilValue clearDS = { 1, 0 };
-    VkClearValue clearValues[3];
-    memset(clearValues, 0, sizeof(clearValues));
-    clearValues[0].color = clearValues[2].color = clearColor;
-    clearValues[1].depthStencil = clearDS;
+    setRenderPassParameters(commandBuffer);
 
-    VkRenderPassBeginInfo rpBeginInfo;
-    memset(&rpBeginInfo, 0, sizeof(rpBeginInfo));
-    rpBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    rpBeginInfo.renderPass = mWindow->defaultRenderPass();
-    rpBeginInfo.framebuffer = mWindow->currentFramebuffer();
-    rpBeginInfo.renderArea.extent.width = sz.width();
-    rpBeginInfo.renderArea.extent.height = sz.height();
-    rpBeginInfo.clearValueCount = mWindow->sampleCountFlagBits() > VK_SAMPLE_COUNT_1_BIT ? 3 : 2;
-    rpBeginInfo.pClearValues = clearValues;
-    mDeviceFunctions->vkCmdBeginRenderPass(cmdBuf, &rpBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-    mDeviceFunctions->vkCmdBindPipeline(cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, mPipeline);
- 
-    VkDeviceSize vbOffset = 0;
-
-
-
-    VkViewport viewport{};
-    viewport.x = viewport.y = 0;
-    viewport.width = sz.width();
-    viewport.height = sz.height();
-    viewport.minDepth = 0;
-    viewport.maxDepth = 1;
-    mDeviceFunctions->vkCmdSetViewport(cmdBuf, 0, 1, &viewport);
-
-    VkRect2D scissor{};
-    scissor.offset.x = scissor.offset.y = 0;
-    scissor.extent.width = viewport.width;
-    scissor.extent.height = viewport.height;
-    mDeviceFunctions->vkCmdSetScissor(cmdBuf, 0, 1, &scissor);
+    VkDeviceSize vbOffset{ 0 };     //Offsets into buffer being bound
 
     /********************************* Our draw call!: *********************************/
-
-    //Push the model matrix to the shader and draw the triangle
-    for (auto it=mObjects.begin(); it!=mObjects.end(); it++)
+    for (std::vector<VisualObject*>::iterator it=mObjects.begin(); it!=mObjects.end(); it++)
     {
-        mDeviceFunctions->vkCmdBindVertexBuffers(cmdBuf, 0, 1, &(*it)->mBuffer, &vbOffset);
-        setModelMatrix(mCamera.cMatrix()*(*it)->mMatrix);
-        mDeviceFunctions->vkCmdDraw(cmdBuf, (*it)->mVertices.size(), 1, 0, 0);
-    }
-    mDeviceFunctions->vkCmdEndRenderPass(cmdBuf);
+        if ((*it)->drawType == 0)
+            mDeviceFunctions->vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mPipeline1);
+        else
+            mDeviceFunctions->vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mPipeline2);
 
-    //Rotates the object in place every frame
-    for(auto it=mObjects.begin(); it!=mObjects.end(); it++)
-    {
-        //rotates
-        (*it)->rotate(0.1,0,1,0);
+        mDeviceFunctions->vkCmdBindVertexBuffers(commandBuffer, 0, 1, &(*it)->mBuffer, &vbOffset);
+        pushConstants(mCamera.cMatrix() * (*it)->mMatrix, (*it)->mColor);
+        mDeviceFunctions->vkCmdDraw(commandBuffer, (*it)->mVertices.size(), 1, 0, 0);
     }
+    /***************************************/
+
+    mDeviceFunctions->vkCmdEndRenderPass(commandBuffer);
+
+    //mObjects.at(1)->rotate(1.0f, 0.0f, 0.0f, 1.0f);
 
     mWindow->frameReady();
     mWindow->requestUpdate(); // render continuously, throttled by the presentation rate
@@ -452,9 +398,14 @@ void RenderWindow::releaseResources()
 
     VkDevice dev = mWindow->device();
 
-    if (mPipeline) {
-        mDeviceFunctions->vkDestroyPipeline(dev, mPipeline, nullptr);
-        mPipeline = VK_NULL_HANDLE;
+    if (mPipeline1) {
+        mDeviceFunctions->vkDestroyPipeline(dev, mPipeline1, nullptr);
+        mPipeline1 = VK_NULL_HANDLE;
+    }
+
+    if (mPipeline2) {
+        mDeviceFunctions->vkDestroyPipeline(dev, mPipeline2, nullptr);
+        mPipeline2 = VK_NULL_HANDLE;
     }
 
     if (mPipelineLayout) {
@@ -485,6 +436,20 @@ void RenderWindow::releaseResources()
     if (mBufferMemory) {
         mDeviceFunctions->vkFreeMemory(dev, mBufferMemory, nullptr);
         mBufferMemory = VK_NULL_HANDLE;
+    }
+
+    // Samme for alle objekter i container
+    for (auto it=mObjects.begin(); it!=mObjects.end(); it++) {
+        if ((*it)->mBuffer) {
+            mDeviceFunctions->vkDestroyBuffer(dev, (*it)->mBuffer, nullptr);
+            (*it)->mBuffer = VK_NULL_HANDLE;
+        }
+    }
+    for (auto it=mObjects.begin(); it!=mObjects.end(); it++) {
+        if ((*it)->mBufferMemory) {
+            mDeviceFunctions->vkFreeMemory(dev, (*it)->mBufferMemory, nullptr);
+            (*it)->mBuffer = VK_NULL_HANDLE;
+        }
     }
 }
 
@@ -524,7 +489,7 @@ void RenderWindow::createBuffer(VkDevice logicalDevice,
 
     err = mDeviceFunctions->vkBindBufferMemory(logicalDevice, visualObject ->mBuffer, visualObject->mBufferMemory,0);
     if (err != VK_SUCCESS)
-        qFatal("Failed to bind buffer memory: %d", err);
+        qFatal("Failed to bind buffer memory: %d err");
 
 
     quint8* p{nullptr};
@@ -540,5 +505,56 @@ void RenderWindow::createBuffer(VkDevice logicalDevice,
 
 
 
+}
+
+void RenderWindow::pushConstants(QMatrix4x4 modelMatrix, QVector3D color)
+{
+    float tempArray[19]{};
+    QMatrix4x4 tempMatrix = modelMatrix.transposed();
+    tempMatrix.copyDataTo(tempArray);
+    tempArray[16] = color.x();
+    tempArray[17] = color.y();
+    tempArray[18] = color.z();
+    mDeviceFunctions->vkCmdPushConstants(mWindow->currentCommandBuffer(), mPipelineLayout,
+                                         VK_SHADER_STAGE_VERTEX_BIT, 0, 19 * sizeof(float), tempArray);
+}
+
+void RenderWindow::setRenderPassParameters(VkCommandBuffer commandBuffer)
+{
+    const QSize swapChainImageSize = mWindow->swapChainImageSize();
+
+    //Backtgound color of the render window - dark grey
+    VkClearColorValue clearColor = { { 0.3, 0.3, 0.3, 1 } };
+
+    VkClearDepthStencilValue clearDepthStencil = { 1, 0 };
+    VkClearValue clearValues[3]{};  //C++11 {} works even on arrays!
+    clearValues[0].color = clearValues[2].color = clearColor;
+    clearValues[1].depthStencil = clearDepthStencil;
+
+    VkRenderPassBeginInfo renderPassBeginInfo{};
+    renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    renderPassBeginInfo.renderPass = mWindow->defaultRenderPass();
+    renderPassBeginInfo.framebuffer = mWindow->currentFramebuffer();
+    renderPassBeginInfo.renderArea.extent.width = swapChainImageSize.width();
+    renderPassBeginInfo.renderArea.extent.height = swapChainImageSize.height();
+    renderPassBeginInfo.clearValueCount = mWindow->sampleCountFlagBits() > VK_SAMPLE_COUNT_1_BIT ? 3 : 2;
+    renderPassBeginInfo.pClearValues = clearValues;
+    mDeviceFunctions->vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+    //Viewport - area of the image to render to, usually (0,0) to (width, height)
+    VkViewport viewport{};
+    viewport.x = viewport.y = 0.f;
+    viewport.width = swapChainImageSize.width();
+    viewport.height = swapChainImageSize.height();
+    viewport.minDepth = 0.f;                //min framebuffer depth
+    viewport.maxDepth = 1.f;                //max framebuffer depth
+    mDeviceFunctions->vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+
+    //Scissor - area to draw in the target frame buffer
+    VkRect2D scissor{};
+    scissor.offset.x = scissor.offset.y = 0;
+    scissor.extent.width = viewport.width;
+    scissor.extent.height = viewport.height;
+    mDeviceFunctions->vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 }
 

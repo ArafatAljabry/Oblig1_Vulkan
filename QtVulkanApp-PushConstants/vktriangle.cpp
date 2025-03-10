@@ -2,6 +2,11 @@
 
 VkTriangle::VkTriangle() :VisualObject() {
 
+
+
+
+    mMatrix.setToIdentity();
+    /*
     //Y up, front = CCW
     // X, Y, Z  R, G, B   U, V
     vertex v1{-1.0f,   0.0f,  0.0f,   1.0f, 0.0f, 0.0f};
@@ -15,4 +20,5 @@ VkTriangle::VkTriangle() :VisualObject() {
     mVertices.push_back(v3);
     mVertices.push_back(v2);
     mVertices.push_back(v4);
+*/
 }

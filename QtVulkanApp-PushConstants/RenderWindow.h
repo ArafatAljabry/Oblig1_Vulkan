@@ -2,10 +2,11 @@
 #define RENDERWINDOW_H
 
 #include <QVulkanWindow>
-#include  "VKTriangle.h"
+#include "VKTriangle.h"
 #include "trianglesurface.h"
 #include "vkgraph.h"
 #include "camera.h"
+
 
 class RenderWindow : public QVulkanWindowRenderer
 {
@@ -35,10 +36,15 @@ public:
     void getVulkanHWInfo();
     std::vector<VisualObject*>& getObjects(){return mObjects;}
 
+    //Hashtabell for objekter
+    std::unordered_map<std::string,VisualObject*>& getMap(){return mMap;}
+
 protected:
 
     //Creates the Vulkan shader module from the precompiled shader files in .spv format
     VkShaderModule createShader(const QString &name);
+    void pushConstants(QMatrix4x4 modelMatrix, QVector3D color);
+    void setRenderPassParameters(VkCommandBuffer commandBuffer);
 
 	void setModelMatrix(QMatrix4x4 modelMatrix);
 
@@ -60,16 +66,20 @@ protected:
 
     VkPipelineCache mPipelineCache{ VK_NULL_HANDLE };
     VkPipelineLayout mPipelineLayout{ VK_NULL_HANDLE };
-    VkPipeline mPipeline{ VK_NULL_HANDLE };
+    VkPipeline mPipeline1{ VK_NULL_HANDLE };
+    VkPipeline mPipeline2{ VK_NULL_HANDLE };
 
 private:
     friend class VulkanWindow;
     Camera mCamera;
+    class VulkanWindow* mVulkanWindow{nullptr};
     //void updateUniformBuffer (const QMatrix4x4& modelMatrix, int currentframe);
     VkTriangle mTriangle;
     TriangleSurface mSurface;
     VisualObject mVisualObject;
     std::vector<VisualObject*> mObjects;
+
+    std::unordered_map<std::string,VisualObject*> mMap; // Alternative container
 
     void createBuffer(VkDevice logicalDevice, const VkDeviceSize uniAlign,
                       VisualObject* visualObject, VkBufferUsageFlags usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);

@@ -11,6 +11,8 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QTabWidget>
+#include <QLineEdit>
+#include <QInputDialog>
 
 #include <QMenuBar>
 #include <QFileDialog>
@@ -53,6 +55,13 @@ MainWindow::MainWindow(VulkanWindow *vw, QPlainTextEdit *logWidget)
     buttonLayout->addWidget(quitButton, 1);
     layout->addLayout(buttonLayout);
 
+    //Dialogbox
+    QPushButton* nameButton = new QPushButton(tr("&Name"));
+
+    nameButton->setFocusPolicy(Qt::NoFocus);
+    connect(nameButton, SIGNAL(clicked()), this, SLOT(selectName()));
+    buttonLayout->addWidget(nameButton, 1);
+
     setLayout(layout);
 
     //sets the keyboard input focus to the RenderWindow when program starts
@@ -60,6 +69,23 @@ MainWindow::MainWindow(VulkanWindow *vw, QPlainTextEdit *logWidget)
     // - can be deleted, but then you have to click inside the RenderWindow to get the focus
     vulkanWindowWrapper->setFocus();
 }
+
+void MainWindow::selectName()
+{
+    bool ok;
+    QString text = QInputDialog::getText(this, tr("QInputDialog::getText()"),
+                                         tr("Object name:"), QLineEdit::Normal,
+                                         QDir::home().dirName(), &ok);
+    if (ok && !text.isEmpty())
+        mSelectedName = text.toStdString();
+
+
+    auto rw = dynamic_cast<RenderWindow*>(mVulkanWindow->getRendererWindow());
+    auto map = rw->getMap();
+    auto visualObject = map[mSelectedName];
+    mVulkanWindow->setSelectedObject(visualObject);
+}
+
 
 //Makes the screen grab, and saves it to file
 void MainWindow::onScreenGrabRequested()

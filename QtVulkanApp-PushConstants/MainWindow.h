@@ -2,6 +2,7 @@
 #define HELLOVULKANWIDGET_H
 
 #include <QWidget>
+#include <qpushbutton.h>
 
 QT_FORWARD_DECLARE_CLASS(QTabWidget)
 QT_FORWARD_DECLARE_CLASS(QPlainTextEdit)
@@ -12,6 +13,7 @@ class QMenu;
 class QMenuBar;
 class QAction;
 class QDialogButtonBox;
+
 
 class MainWindow : public QWidget
 {
@@ -35,8 +37,11 @@ private:
 
     QMenuBar* createMenu();
 
+
+    std::string mSelectedName;
 private slots:
     void openFile();
+    void selectName();
 };
 
 #endif // HELLOVULKANWIDGET_H
