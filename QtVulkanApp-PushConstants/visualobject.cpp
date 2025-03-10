@@ -34,8 +34,4 @@ void VisualObject::scale(float s)
     mMatrix.scale(s);
 }
 
-void VisualObject::getTag()
-{
-    return mTag;
-}
 

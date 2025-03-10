@@ -31,7 +31,7 @@ public:
     void move(float x, float y = 0.0f, float z = 0.0f);
     void scale(float s);
     void rotate(float t, float x, float y, float z);
-    void getTag() const;
+    std::string getTag() const{return mTag;}
 
     int drawType{0}; // 0 = fill, 1 = line
 
@@ -39,7 +39,7 @@ public:
 
 protected:
     std::string mName;
-    std::String tag;
+    std::string mTag;
 
 };
 

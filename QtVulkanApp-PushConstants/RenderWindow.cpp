@@ -574,17 +574,17 @@ bool RenderWindow::overlapDetection(VisualObject* obj1, VisualObject* obj2)
 
 void RenderWindow::playerCollision()
 {
-    for(auto i : mObjects)
+    for(VisualObject* i : mObjects)
     {
         if(i->getName() == "Player")
         {
-            for(auto j : mObjects)
+            for(VisualObject* j : mObjects)
             {
                 if(overlapDetection(i,j) && j != i)
                 {
-                    if(j->getTag == "pickup")
-                    if(j->getTag == "enemy")
-                    if(j->getTag =="actor")
+                    if(j->getTag() == "pickup");
+                    if(j->getTag() == "enemy");
+                    if(j->getTag() =="actor");
 
 
 

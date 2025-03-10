@@ -41,7 +41,7 @@ public:
 
     //Collision detection
     bool overlapDetection(VisualObject* obj1, VisualObject* obj2);
-    void onCollision();
+    void playerCollision();
 
 protected:
 
