@@ -13,13 +13,15 @@ public:
     std::vector<vertex> mVertices;
     std::vector<vertex> getVertices(){return mVertices;}
 
+    //for collision
+    float radius{0.5f};
 
     VkDeviceMemory mBufferMemory{VK_NULL_HANDLE};
     VkBuffer mBuffer{VK_NULL_HANDLE};
     VkPrimitiveTopology mTopology{VK_PRIMITIVE_TOPOLOGY_LINE_LIST};
 
     QMatrix4x4 mMatrix;
-
+    QVector3D getPosition();
     //Getter and setter for name
     void setName(std::string name){mName = name;}
     std::string getName() const{return mName;}
@@ -29,6 +31,7 @@ public:
     void move(float x, float y = 0.0f, float z = 0.0f);
     void scale(float s);
     void rotate(float t, float x, float y, float z);
+    void getTag() const;
 
     int drawType{0}; // 0 = fill, 1 = line
 
@@ -36,6 +39,7 @@ public:
 
 protected:
     std::string mName;
+    std::String tag;
 
 };
 

@@ -39,6 +39,10 @@ public:
     //Hashtabell for objekter
     std::unordered_map<std::string,VisualObject*>& getMap(){return mMap;}
 
+    //Collision detection
+    bool overlapDetection(VisualObject* obj1, VisualObject* obj2);
+    void onCollision();
+
 protected:
 
     //Creates the Vulkan shader module from the precompiled shader files in .spv format

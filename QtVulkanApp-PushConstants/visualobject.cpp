@@ -17,7 +17,12 @@ void VisualObject::rotate(float t, float x, float y, float z)
  */
 void VisualObject::move(float x, float y, float z)
 {
-    mMatrix.translate(x,y,z);
+    mMatrix.translate(x,y,z);    
+}
+
+QVector3D VisualObject::getPosition()
+{
+    return QVector3D(mMatrix(0,3), mMatrix(1,3), mMatrix(2,3));
 }
 /**
  * @brief Sclae the object with a value
@@ -27,5 +32,10 @@ void VisualObject::scale(float s)
 {
 
     mMatrix.scale(s);
+}
+
+void VisualObject::getTag()
+{
+    return mTag;
 }
 

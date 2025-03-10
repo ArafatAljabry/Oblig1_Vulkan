@@ -5,6 +5,7 @@
 #include "WorldAxis.h"
 #include "box.h"
 #include "plane.h"
+#include <qmath.h>
 
 
 
@@ -556,5 +557,40 @@ void RenderWindow::setRenderPassParameters(VkCommandBuffer commandBuffer)
     scissor.extent.width = viewport.width;
     scissor.extent.height = viewport.height;
     mDeviceFunctions->vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+}
+
+bool RenderWindow::overlapDetection(VisualObject* obj1, VisualObject* obj2)
+{
+    float distBetweenObj = sqrt(
+                                std::pow((obj1->getPosition().x() - obj2->getPosition().x()),2) +
+                                std::pow(obj1->getPosition().y() - obj2->getPosition().y(),2) +
+                                std::pow(obj1->getPosition().z() - obj2->getPosition().z(),2)
+                            );
+
+
+    return distBetweenObj <= obj1->radius + obj2->radius;
+
+}
+
+void RenderWindow::playerCollision()
+{
+    for(auto i : mObjects)
+    {
+        if(i->getName() == "Player")
+        {
+            for(auto j : mObjects)
+            {
+                if(overlapDetection(i,j) && j != i)
+                {
+                    if(j->getTag == "pickup")
+                    if(j->getTag == "enemy")
+                    if(j->getTag =="actor")
+
+
+
+                }
+            }
+        }
+    }
 }
 
