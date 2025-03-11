@@ -17,7 +17,13 @@ void VisualObject::rotate(float t, float x, float y, float z)
  */
 void VisualObject::move(float x, float y, float z)
 {
-    mMatrix.translate(x,y,z);    
+   /* mMatrix.translate(
+                        getPosition().x() + x,
+                        getPosition().y() + y,
+                        getPosition().z() + z
+                    );
+*/
+    mMatrix.translate(x,y,z);
 }
 
 QVector3D VisualObject::getPosition()
@@ -30,8 +36,11 @@ QVector3D VisualObject::getPosition()
  */
 void VisualObject::scale(float s)
 {
-
     mMatrix.scale(s);
 }
 
+void VisualObject::setTag(std::string tag)
+{
+    mTag = tag;
+}
 

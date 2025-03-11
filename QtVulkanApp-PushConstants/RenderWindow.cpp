@@ -49,14 +49,49 @@ RenderWindow::RenderWindow(QVulkanWindow *w, bool msaa)
     //mObjects.push_back(new VKGraph("vertex2.txt"));
    // mObjects.push_back(new TriangleSurface("vertex3.txt"));
     //mObjects.push_back(new TriangleSurface());
+
+
+    //player
+    mPlayer = new box();
+    mPlayer->setName("player");
+    mPlayer->setTag("player");
+    mObjects.push_back(mPlayer);
+
+    /******************************************
+     * Scene setup
+     ******************************************/
     mObjects.push_back(new WorldAxis());
-    mObjects.push_back(new box());
     mObjects.push_back(new plane());
-    //Gir objektet navn
-    //mObjects.at(0)->setName("surf");
-    mObjects.at(0)->setName("axis");
-    mObjects.at(1)->setName("square");
+    // !at(0) er spilleren
+    mObjects.at(1)->setName("axis");
     mObjects.at(2)->setName("plane");
+    //  axis and plane
+    mObjects.at(1)->enableCollision = false;
+    mObjects.at(2)->enableCollision = false;
+
+    //pickups
+    mObjects.push_back(new box());
+    mObjects.push_back(new box());
+    mObjects.push_back(new box());
+    mObjects.push_back(new box());
+    mObjects.push_back(new box());
+    mObjects.push_back(new box());
+    mObjects.at(3)->setName("pickup1");
+    mObjects.at(4)->setName("pickup2");
+    mObjects.at(5)->setName("pickup3");
+    mObjects.at(6)->setName("pickup4");
+    mObjects.at(7)->setName("pickup5");
+    mObjects.at(8)->setName("pickup6");
+
+    for(int i = 3; i < 9; i++)
+    {
+        mObjects.at(i)->setTag("pickup");
+        mObjects.at(i)->move(20,0,20);
+
+    }
+
+
+    /******************************************/
 
     //Legger inn i map
     for(auto it = mObjects.begin();it!=mObjects.end();it++)
@@ -64,8 +99,8 @@ RenderWindow::RenderWindow(QVulkanWindow *w, bool msaa)
         mMap.insert(std::pair<std::string,VisualObject*>{(*it)->getName(),*it} );
     }
 
-      mCamera.setPosition(QVector3D(-1,-1,-40)); // Camera is -4 away from origo
-
+      mCamera.setPosition(QVector3D(-10,-50,-10)); // Camera is -40 away from origo
+      mCamera.pitch(90);
 
       mVulkanWindow = dynamic_cast<VulkanWindow*>(w);
 }
@@ -279,6 +314,12 @@ void RenderWindow::startNextFrame()
     //Has to be done each frame to get smooth movement
     mVulkanWindow->handleInput();
     mCamera.update();               //input can have moved the camera
+
+    //collision detection
+    collisionDetection(mPlayer);
+
+    //NPC patrolling
+
 
     VkCommandBuffer commandBuffer = mWindow->currentCommandBuffer();
 
@@ -559,38 +600,52 @@ void RenderWindow::setRenderPassParameters(VkCommandBuffer commandBuffer)
     mDeviceFunctions->vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 }
 
-bool RenderWindow::overlapDetection(VisualObject* obj1, VisualObject* obj2)
+bool RenderWindow::overlapDetection(VisualObject* obj1, VisualObject* obj2) const
 {
     float distBetweenObj = sqrt(
-                                std::pow((obj1->getPosition().x() - obj2->getPosition().x()),2) +
+                                std::pow(obj1->getPosition().x() - obj2->getPosition().x(),2) +
                                 std::pow(obj1->getPosition().y() - obj2->getPosition().y(),2) +
                                 std::pow(obj1->getPosition().z() - obj2->getPosition().z(),2)
                             );
-
 
     return distBetweenObj <= obj1->radius + obj2->radius;
 
 }
 
-void RenderWindow::playerCollision()
+void RenderWindow::collisionDetection(VisualObject* obj)
 {
-    for(VisualObject* i : mObjects)
+    for(VisualObject* j : mObjects)
     {
-        if(i->getName() == "Player")
+        if(j->getTag() != "player" && overlapDetection(obj,j) && j->enableCollision)
         {
-            for(VisualObject* j : mObjects)
+            if(j->getTag() == "pickup")
             {
-                if(overlapDetection(i,j) && j != i)
-                {
-                    if(j->getTag() == "pickup");
-                    if(j->getTag() == "enemy");
-                    if(j->getTag() =="actor");
-
-
-
-                }
+                mPickupsCollected++;
+                j->move(0,-20,0);
+                qDebug("%i out of 6 pickups collected",mPickupsCollected);
             }
+
+            if(j->getTag() == "enemy")
+            {
+                //Disable movement;speed= 0?
+                mVulkanWindow->setObjectMovementSpeed(0.0f);
+                qDebug("You lost");
+            }
+
+            if(j->getTag() =="house")
+                 qDebug("Collided with the house");
         }
+    }
+}
+
+VisualObject* RenderWindow::getPlayer() const
+{
+    for(VisualObject* obj : mObjects)
+    {
+        if(obj->getTag() == "player")
+            return obj;
+        qDebug("No object with mTag 'player' found");
+        return NULL;
     }
 }
 

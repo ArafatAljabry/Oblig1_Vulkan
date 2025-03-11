@@ -40,8 +40,11 @@ public:
     std::unordered_map<std::string,VisualObject*>& getMap(){return mMap;}
 
     //Collision detection
-    bool overlapDetection(VisualObject* obj1, VisualObject* obj2);
-    void playerCollision();
+    bool overlapDetection(VisualObject* obj1, VisualObject* obj2) const;
+    void collisionDetection(VisualObject* obj = nullptr);
+
+    //Player
+    VisualObject* getPlayer() const;
 
 protected:
 
@@ -82,6 +85,8 @@ private:
     TriangleSurface mSurface;
     VisualObject mVisualObject;
     std::vector<VisualObject*> mObjects;
+    VisualObject* mPlayer{nullptr};
+    int mPickupsCollected{0};
 
     std::unordered_map<std::string,VisualObject*> mMap; // Alternative container
 

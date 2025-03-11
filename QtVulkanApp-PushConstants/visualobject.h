@@ -7,6 +7,7 @@
 
 class VisualObject
 {
+
 public:
     VisualObject();
 
@@ -26,20 +27,22 @@ public:
     void setName(std::string name){mName = name;}
     std::string getName() const{return mName;}
 
+
     //Functions for moving, scaling and rotating the object
 
     void move(float x, float y = 0.0f, float z = 0.0f);
     void scale(float s);
     void rotate(float t, float x, float y, float z);
     std::string getTag() const{return mTag;}
-
+    void setTag(std::string tag);
+    bool enableCollision{true};
     int drawType{0}; // 0 = fill, 1 = line
 
     QVector3D mColor{0.f,0.f,0.f};
 
 protected:
     std::string mName;
-    std::string mTag;
+    std::string mTag{"actor"};
 
 };
 

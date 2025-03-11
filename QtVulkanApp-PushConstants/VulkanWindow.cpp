@@ -14,13 +14,19 @@ void VulkanWindow::setCameraSpeed(float value)
 }
 
 VulkanWindow::VulkanWindow()
-{  }
+{
+
+}
 
 QVulkanWindowRenderer* VulkanWindow::createRenderer()
 {
     mRenderWindow = new RenderWindow(this,true);
     mCamera = &dynamic_cast<RenderWindow*>(mRenderWindow)->mCamera;
 
+    if(dynamic_cast<RenderWindow*>(mRenderWindow)->mObjects.at(0) != nullptr)
+    {
+        mSelectedObject = dynamic_cast<RenderWindow*>(mRenderWindow)->mObjects.at(0);
+    }
 
     //Makes a new instance of the RenderWindow (our Renderer) class
     return mRenderWindow; // last true == try MSAA
@@ -79,15 +85,45 @@ void VulkanWindow::mouseReleaseEvent(QMouseEvent *event)
 
 void VulkanWindow::keyPressEvent(QKeyEvent *event)
 {
+
+    //objects
     if(event->key() == Qt::Key_0)
     {
-        mIndex = 0;
+        setSelectedObject(dynamic_cast<RenderWindow*>(mRenderWindow)->mObjects.at(0));
     }
 
-    if(event->key() == Qt::Key_1)
+    if(event->key() == Qt::Key_3)
     {
-        mIndex = 1;
+       setSelectedObject(dynamic_cast<RenderWindow*>(mRenderWindow)->mObjects.at(3));
     }
+    if(event->key() == Qt::Key_4)
+    {
+        setSelectedObject(dynamic_cast<RenderWindow*>(mRenderWindow)->mObjects.at(4));
+    }
+
+    if(event->key() == Qt::Key_5)
+    {
+        setSelectedObject(dynamic_cast<RenderWindow*>(mRenderWindow)->mObjects.at(5));
+    }
+    if(event->key() == Qt::Key_6)
+    {
+        setSelectedObject(dynamic_cast<RenderWindow*>(mRenderWindow)->mObjects.at(6));
+    }
+
+    if(event->key() == Qt::Key_7)
+    {
+        setSelectedObject(dynamic_cast<RenderWindow*>(mRenderWindow)->mObjects.at(7));
+    }
+    if(event->key() == Qt::Key_8)
+    {
+        setSelectedObject(dynamic_cast<RenderWindow*>(mRenderWindow)->mObjects.at(8));
+    }
+
+    if(event->key() == Qt::Key_9)
+    {
+        //setSelectedObject(dynamic_cast<RenderWindow*>(mRenderWindow)->mObjects.at(9));
+    }
+
 
     //Keyboard
 
@@ -110,21 +146,15 @@ void VulkanWindow::keyPressEvent(QKeyEvent *event)
 
     // Arrow keys
     if(event->key() == Qt::Key_Up)
-    {
         mInput.UP = true;
-    }
     if(event->key() == Qt::Key_Down)
-    {
         mInput.DOWN = true;
-    }
     if(event->key() == Qt::Key_Left)
-    {
         mInput.LEFT = true;
-    }
+
     if(event->key() == Qt::Key_Right)
-    {
         mInput.RIGHT = true;
-    }
+
 
     if (event->key() == Qt::Key_Escape)
     {
@@ -201,8 +231,9 @@ void VulkanWindow::keyReleaseEvent(QKeyEvent *event)
 
 void VulkanWindow::handleInput()
 {
+
     //Camera
-    mCamera->setSpeed(0.0f); // Cancel last frame movement
+    mCamera->setSpeed(0); // Cancel last frame movement
 
     if(mInput.RMB)
     {
@@ -218,5 +249,26 @@ void VulkanWindow::handleInput()
             mCamera->updateHeight(mCameraSpeed);
         if(mInput.E)
             mCamera->updateHeight(-mCameraSpeed);
+    }
+    else{
+        if(mSelectedObject != nullptr)
+        {
+            if(mInput.W)
+                mSelectedObject->move(0,0,-objectMovementSpeed);
+
+            if(mInput.A)
+                mSelectedObject->move(-objectMovementSpeed,0,0);
+
+            if(mInput.S)
+                mSelectedObject->move(0,0,objectMovementSpeed);
+
+            if(mInput.D)
+                mSelectedObject->move(objectMovementSpeed,0,0);
+            if(mInput.E)
+                mSelectedObject->move(0,objectMovementSpeed,0);
+            if(mInput.Q)
+                mSelectedObject->move(0,-objectMovementSpeed,0);
+
+        }
     }
 }

@@ -23,7 +23,9 @@ private:
     int mMouseXlast {0}; // for mouse rotate input
     int mMouseYlast {0};
     Input mInput;
-
+    float objectMovementSpeed{0.25f};
+    //For iteration through object container
+    int objectIterator{0};
     class Camera* mCamera{nullptr};
 
 public:
@@ -32,7 +34,7 @@ public:
     QVulkanWindowRenderer* createRenderer() override;
     QVulkanWindowRenderer* getRendererWindow() const {return mRenderWindow;}
     void setSelectedObject(VisualObject* object){ mSelectedObject = object;}
-
+    void setObjectMovementSpeed(float newSpeed){objectMovementSpeed = newSpeed;}
     void handleInput();
 signals:
     void frameQueued(int colorValue);
@@ -52,7 +54,7 @@ protected:
     void wheelEvent(QWheelEvent *event) override;
 
     QVulkanWindowRenderer* mRenderWindow;
-    int mIndex{0};
+    //int mIndex{0};
     VisualObject* mSelectedObject{nullptr};
 
 

@@ -29,8 +29,8 @@ void Camera::lookAt(const QVector3D &eye, const QVector3D &at, const QVector3D &
 void Camera::setSpeed(float speed)
 {
     mSpeed = speed;
-
 }
+
 void Camera::moveRight(float delta)
 {
     mPosition.setX(mPosition.x() + delta);
