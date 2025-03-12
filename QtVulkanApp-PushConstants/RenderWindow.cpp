@@ -112,9 +112,9 @@ RenderWindow::RenderWindow(QVulkanWindow *w, bool msaa)
     mObjects.at(11)->scale(5);
     mObjects.at(11)->radius = 3.6;
 
-    //wall
+    //door
     mObjects.push_back(new wall(0,1,1));
-    mObjects.at(12)->setName("wall");
+    mObjects.at(12)->setName("door");
     mObjects.at(12)->setTag("wall");
     mObjects.at(12)->move(32,1,20);
     mObjects.at(12)->scale(3);
@@ -690,27 +690,37 @@ void RenderWindow::onCollision(VisualObject* obj)
                 mPickupsCollected++;
                 j->move(0,-20,0);
                 qDebug("%i out of 6 pickups collected",mPickupsCollected);
+
+                if(mPickupsCollected == 6)
+                    qDebug("You won!");
             }
 
             if(j->getTag() == "enemy")
             {
-                mVulkanWindow->setObjectMovementSpeed(0.0f);
-                qDebug("You lost");
+                if(!gameOver)
+                {
+                    gameOver = true;
+                    mVulkanWindow->setObjectMovementSpeed(0.0f);
+                    qDebug("You lost");
+
+                }
             }
 
             if(j->getTag() == "house" && mIsHouse == true)
             {
-
+                if (mObjects.at(12)->isOpen != true)
+                {
+                    mVulkanWindow->setObjectMovementSpeed(-0.1f);
+                }else{
                 //Switches out the house with another one and moves the camera
                 mCamera.setPosition(QVector3D(-20.3f,-11.4f,-14.0f));
                 j->move(0,-10,0);
                 qDebug("Collided with the house");
-                mIsHouse = false;
+                mIsHouse = false;}
             }
             if(j->getTag() == "wall" && j->isOpen == false)
             {
                 j->rotate(-90,0,1,0);
-
                 j->isOpen = true;
                 qDebug("Collided with the wall");
             }
@@ -739,6 +749,11 @@ void RenderWindow::onCollisionEnd(VisualObject* obj)
                 mObjects.at(11)->move(0,10,0);
                 qDebug("Collided with the house");
                 mIsHouse = true;
+            }
+            if(j->getTag() == "house" && mIsHouse == true)
+            {
+                if(mVulkanWindow->getObjectMovementSpeed() != 0.25f && !gameOver)
+                    mVulkanWindow->setObjectMovementSpeed(0.25f);
             }
         }
     }

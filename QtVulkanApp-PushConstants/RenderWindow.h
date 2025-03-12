@@ -39,11 +39,30 @@ public:
     //Hashtabell for objekter
     std::unordered_map<std::string,VisualObject*>& getMap(){return mMap;}
 
-    //Collision detection
+    /**
+     * @brief Checks if two given objects obverlap,
+     * @param obj1
+     * @param obj2
+     * @return true if they overlap, false if not
+     */
     bool overlapDetection(VisualObject* obj1, VisualObject* obj2) const;
+
+    /**
+     * @brief Based on the tag of the object colliding with, logic is applied
+     * @param obj
+     */
     void onCollision(VisualObject* obj = nullptr);
+
+    /**
+     * @brief Based on the tag of the object that is no longer colliding with, logic is applied
+     * @param obj
+     */
     void onCollisionEnd(VisualObject* obj);
-    //Player
+
+    /**
+     * @brief Gets the player in the game from object pool, requires the object to have the tag "player"
+     * @return VisualObject with mTag "player"
+     */
     VisualObject* getPlayer() const;
 
 protected:
@@ -94,6 +113,8 @@ private:
     // what direction the object should move in
     int patrolRoute{0};
     int patrolCounter{0};
+
+    bool gameOver{false}; // lose condition is hitting an enemy
 
     std::unordered_map<std::string,VisualObject*> mMap; // Alternative container
 

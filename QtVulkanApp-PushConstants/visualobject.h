@@ -33,9 +33,11 @@ public:
     void move(float x, float y = 0.0f, float z = 0.0f);
     void scale(float s);
     void rotate(float t, float x, float y, float z);
+
     std::string getTag() const{return mTag;}
     void setTag(std::string tag);
-    bool enableCollision{true};
+
+    bool enableCollision{true}; //Won't trigger collision logic if false
     int drawType{0}; // 0 = fill, 1 = line
 
     QVector3D mColor{0.f,0.f,0.f};
