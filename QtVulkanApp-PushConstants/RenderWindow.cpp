@@ -381,7 +381,6 @@ void RenderWindow::startNextFrame()
             patrolCounter = 0;
             patrolRoute = 1;
         }
-
     }
     if(patrolRoute == 1)
     {
@@ -717,9 +716,9 @@ void RenderWindow::onCollision(VisualObject* obj)
 
             if(j->getTag() == "house" && mIsHouse == true)
             {
-                if (mObjects.at(12)->isOpen != true)
+                if (mObjects.at(12)->isOpen == false)
                 {
-                    mVulkanWindow->setObjectMovementSpeed(-0.1f);
+                    mPlayer->move(mPlayer->radius,0,mPlayer->radius);
                 }else{
                 //Switches out the house with another one and moves the camera
                 mCamera.setPosition(QVector3D(-20.3f,-11.4f,-14.0f));
