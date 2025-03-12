@@ -58,6 +58,8 @@ RenderWindow::RenderWindow(QVulkanWindow *w, bool msaa)
     mPlayer->setName("player");
     mPlayer->setTag("player");
     mObjects.push_back(mPlayer);
+    mPlayer->move(10,1,20);
+
 
     /******************************************
      * Scene setup
@@ -85,12 +87,19 @@ RenderWindow::RenderWindow(QVulkanWindow *w, bool msaa)
     mObjects.at(7)->setName("pickup5");
     mObjects.at(8)->setName("pickup6");
 
-    for(int i = 3; i < 9; i++)
+    for(int i = 3; i < 8; i++)
     {
         mObjects.at(i)->setTag("pickup");
-        mObjects.at(i)->move(20,1,20);
-
+        if(i < 6)
+        {
+            mObjects.at(i)->move(20,1,5*i);
+        }
+        else{
+            mObjects.at(i)->move(25,1,(i-3)*5);
+        }
     }
+    mObjects.at(8)->setTag("pickup");
+    mObjects.at(8)->move(43,1,20);      // Last pickup, inside the house
     //Enemies
     mObjects.push_back(new box(1,0,0));
     mObjects.push_back(new box(1,0,0));
@@ -100,8 +109,8 @@ RenderWindow::RenderWindow(QVulkanWindow *w, bool msaa)
     mObjects.at(9)->setTag("enemy");
     mObjects.at(10)->setTag("enemy");
 
-    mObjects.at(9)->move(30,1,30);
-    mObjects.at(10)->move(30,1,30);
+    mObjects.at(9)->move(28,1,15);
+    mObjects.at(10)->move(15,1,20);
 
     //House
 
@@ -359,7 +368,7 @@ void RenderWindow::startNextFrame()
     onCollision(mPlayer);
     onCollisionEnd(mPlayer);
 
-    //NPC patrolling
+    /* NPC patrolling*/
     if(patrolRoute == 0)
     {
 
@@ -683,7 +692,7 @@ void RenderWindow::onCollision(VisualObject* obj)
 {
     for(VisualObject* j : mObjects)
     {
-        if(j->getTag() != "player" && overlapDetection(obj,j) && j->enableCollision)
+        if(&j != &mPlayer && overlapDetection(obj,j) && j->enableCollision)
         {
             if(j->getTag() == "pickup")
             {
@@ -733,7 +742,7 @@ void RenderWindow::onCollisionEnd(VisualObject* obj)
 {
     for(VisualObject* j : mObjects)
     {
-        if(j->getTag() != "player" && !(overlapDetection(obj,j)) && j->enableCollision)
+        if(&j != &mPlayer && !(overlapDetection(obj,j)) && j->enableCollision)
         {
 
             if(j->getTag() == "wall" && j->isOpen == true)

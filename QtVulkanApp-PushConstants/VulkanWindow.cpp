@@ -91,7 +91,11 @@ void VulkanWindow::keyPressEvent(QKeyEvent *event)
     {
         setSelectedObject(dynamic_cast<RenderWindow*>(mRenderWindow)->mObjects.at(0));
     }
-
+/*
+ * Assignment specifies "One object(the Player) shall be interactively controllable"
+ * not sure if that means that no other can be controllable or it does not matter as long
+ * as the player is controllable. Key bindings bellow were for my own tesing and experimenting,
+ * wuld like to keep them so i can easily play arund more later.
     if(event->key() == Qt::Key_3)
     {
        setSelectedObject(dynamic_cast<RenderWindow*>(mRenderWindow)->mObjects.at(3));
@@ -123,7 +127,7 @@ void VulkanWindow::keyPressEvent(QKeyEvent *event)
     {
         setSelectedObject(dynamic_cast<RenderWindow*>(mRenderWindow)->mObjects.at(9));
     }
-
+    */
 
     //Keyboard
 
