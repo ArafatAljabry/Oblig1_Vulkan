@@ -2,10 +2,10 @@
 
 plane::plane() {
 
-    vertex v1{0,0,0,   0,0,1};
-    vertex v2{50,0,0,  0,0,1};
-    vertex v6{0,0,50,  0,0,1};
-    vertex v7{50,0,50, 0,0,1};
+    vertex v1{0,0,0,   0.39,0.39,0.39};
+    vertex v2{50,0,0,  0.39,0.39,0.39};
+    vertex v6{0,0,50,  0.39,0.39,0.39};
+    vertex v7{50,0,50, 0.39,0.39,0.39};
 
 
     mVertices.push_back(v1); //bottom

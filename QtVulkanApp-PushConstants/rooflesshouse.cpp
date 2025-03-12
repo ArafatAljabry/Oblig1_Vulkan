@@ -1,7 +1,6 @@
-#include "box.h"
+#include "rooflesshouse.h"
 
-box::box(float r, float g, float b) {
-
+rooflessHouse::rooflessHouse(float r, float g, float b) {
     drawType = 0; // 0 = fill, 1 = line
 
     vertex v1{-1,-1,-1, r,g,b};
@@ -40,7 +39,7 @@ box::box(float r, float g, float b) {
     mVertices.push_back(v1);
     mVertices.push_back(v3);
     mVertices.push_back(v7);
-
+    /*
     mVertices.push_back(v3);
     mVertices.push_back(v7); // top side
     mVertices.push_back(v5);
@@ -54,7 +53,7 @@ box::box(float r, float g, float b) {
     mVertices.push_back(v6);
     mVertices.push_back(v2);
     mVertices.push_back(v1);
-
+*/
     //Skalerer ned kvadrat i eget kordinatsystem/frame
     //Temporary scale and positioning
     mMatrix.setToIdentity();

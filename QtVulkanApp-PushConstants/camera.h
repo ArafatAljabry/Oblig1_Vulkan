@@ -32,6 +32,9 @@ public:
     void update();
     void pitch(float degrees);
     void yaw(float degrees);
+    QVector3D getPosition(){ return mPosition;}
+
+    float getPitch(){return mPitch;}
 
     void translate(float dx, float dy, float dz);
     void rotate(float t, float x, float y, float z);

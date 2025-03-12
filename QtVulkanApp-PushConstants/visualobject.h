@@ -40,6 +40,9 @@ public:
 
     QVector3D mColor{0.f,0.f,0.f};
 
+    //for the door,would be nice on the wall class, but mozzarealla sticks and onion rings
+    bool isOpen{false};
+
 protected:
     std::string mName;
     std::string mTag{"actor"};

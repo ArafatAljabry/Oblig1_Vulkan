@@ -121,7 +121,7 @@ void VulkanWindow::keyPressEvent(QKeyEvent *event)
 
     if(event->key() == Qt::Key_9)
     {
-        //setSelectedObject(dynamic_cast<RenderWindow*>(mRenderWindow)->mObjects.at(9));
+        setSelectedObject(dynamic_cast<RenderWindow*>(mRenderWindow)->mObjects.at(9));
     }
 
 

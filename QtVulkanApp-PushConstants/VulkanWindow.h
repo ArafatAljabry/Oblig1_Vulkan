@@ -36,6 +36,7 @@ public:
     void setSelectedObject(VisualObject* object){ mSelectedObject = object;}
     void setObjectMovementSpeed(float newSpeed){objectMovementSpeed = newSpeed;}
     void handleInput();
+    float getObjectMovementSpeed(){return objectMovementSpeed;}
 signals:
     void frameQueued(int colorValue);
 

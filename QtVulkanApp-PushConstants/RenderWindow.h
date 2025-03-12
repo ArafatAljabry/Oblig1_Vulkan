@@ -41,8 +41,8 @@ public:
 
     //Collision detection
     bool overlapDetection(VisualObject* obj1, VisualObject* obj2) const;
-    void collisionDetection(VisualObject* obj = nullptr);
-
+    void onCollision(VisualObject* obj = nullptr);
+    void onCollisionEnd(VisualObject* obj);
     //Player
     VisualObject* getPlayer() const;
 
@@ -87,6 +87,13 @@ private:
     std::vector<VisualObject*> mObjects;
     VisualObject* mPlayer{nullptr};
     int mPickupsCollected{0};
+    bool mIsHouse{true}; // House is moved away from sight and switched withan alternate version
+                        // this bool helps that logic work.
+
+    // Counters to keep track of time spent in one rout and
+    // what direction the object should move in
+    int patrolRoute{0};
+    int patrolCounter{0};
 
     std::unordered_map<std::string,VisualObject*> mMap; // Alternative container
 

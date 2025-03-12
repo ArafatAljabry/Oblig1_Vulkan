@@ -5,6 +5,8 @@
 #include "WorldAxis.h"
 #include "box.h"
 #include "plane.h"
+#include "rooflesshouse.h"
+#include "wall.h"
 #include <qmath.h>
 
 
@@ -52,7 +54,7 @@ RenderWindow::RenderWindow(QVulkanWindow *w, bool msaa)
 
 
     //player
-    mPlayer = new box();
+    mPlayer = new box(0,0,0);
     mPlayer->setName("player");
     mPlayer->setTag("player");
     mObjects.push_back(mPlayer);
@@ -70,12 +72,12 @@ RenderWindow::RenderWindow(QVulkanWindow *w, bool msaa)
     mObjects.at(2)->enableCollision = false;
 
     //pickups
-    mObjects.push_back(new box());
-    mObjects.push_back(new box());
-    mObjects.push_back(new box());
-    mObjects.push_back(new box());
-    mObjects.push_back(new box());
-    mObjects.push_back(new box());
+    mObjects.push_back(new box(1,1,0));
+    mObjects.push_back(new box(1,1,0));
+    mObjects.push_back(new box(1,1,0));
+    mObjects.push_back(new box(1,1,0));
+    mObjects.push_back(new box(1,1,0));
+    mObjects.push_back(new box(1,1,0));
     mObjects.at(3)->setName("pickup1");
     mObjects.at(4)->setName("pickup2");
     mObjects.at(5)->setName("pickup3");
@@ -86,9 +88,46 @@ RenderWindow::RenderWindow(QVulkanWindow *w, bool msaa)
     for(int i = 3; i < 9; i++)
     {
         mObjects.at(i)->setTag("pickup");
-        mObjects.at(i)->move(20,0,20);
+        mObjects.at(i)->move(20,1,20);
 
     }
+    //Enemies
+    mObjects.push_back(new box(1,0,0));
+    mObjects.push_back(new box(1,0,0));
+
+    mObjects.at(9)->setName("enemy1");
+    mObjects.at(10)->setName("enemy2");
+    mObjects.at(9)->setTag("enemy");
+    mObjects.at(10)->setTag("enemy");
+
+    mObjects.at(9)->move(30,1,30);
+    mObjects.at(10)->move(30,1,30);
+
+    //House
+
+    mObjects.push_back(new box(0,0,1));
+    mObjects.at(11)->setName("house");
+    mObjects.at(11)->setTag("house");
+    mObjects.at(11)->move(40,5,20);
+    mObjects.at(11)->scale(5);
+    mObjects.at(11)->radius = 3.6;
+
+    //wall
+    mObjects.push_back(new wall(0,1,1));
+    mObjects.at(12)->setName("wall");
+    mObjects.at(12)->setTag("wall");
+    mObjects.at(12)->move(32,1,20);
+    mObjects.at(12)->scale(3);
+    mObjects.at(12)->radius = 2.6;
+
+    //Roofless house for scene 2
+    mObjects.push_back(new rooflessHouse(0,0,1));
+    mObjects.at(13)->setName("rooflesshouse");
+    mObjects.at(13)->setTag("rooflesshouse");
+    mObjects.at(13)->move(40,5,20);
+    mObjects.at(13)->scale(5);
+    mObjects.at(13)->radius = 3.6;
+
 
 
     /******************************************/
@@ -99,8 +138,9 @@ RenderWindow::RenderWindow(QVulkanWindow *w, bool msaa)
         mMap.insert(std::pair<std::string,VisualObject*>{(*it)->getName(),*it} );
     }
 
-      mCamera.setPosition(QVector3D(-10,-50,-10)); // Camera is -40 away from origo
-      mCamera.pitch(90);
+      mCamera.setPosition(QVector3D(-12.5,-40,-30)); // Camera is -40 away from origo
+      mCamera.pitch(65);
+
 
       mVulkanWindow = dynamic_cast<VulkanWindow*>(w);
 }
@@ -314,11 +354,40 @@ void RenderWindow::startNextFrame()
     //Has to be done each frame to get smooth movement
     mVulkanWindow->handleInput();
     mCamera.update();               //input can have moved the camera
-
+    //qDebug("%f %f %f %f", mCamera.getPosition().x(),mCamera.getPosition().y(),mCamera.getPosition().z(), mCamera.getPitch());
     //collision detection
-    collisionDetection(mPlayer);
+    onCollision(mPlayer);
+    onCollisionEnd(mPlayer);
 
     //NPC patrolling
+    if(patrolRoute == 0)
+    {
+
+        if(patrolCounter != 100)
+        {
+            mObjects.at(9)->move(0,0,.1);
+            mObjects.at(10)->move(0,0,.1);
+            patrolCounter++;
+        }else{
+            patrolCounter = 0;
+            patrolRoute = 1;
+        }
+
+    }
+    if(patrolRoute == 1)
+    {
+
+        if(patrolCounter != 100)
+        {
+            mObjects.at(9)->move(0,0,-.1);
+            mObjects.at(10)->move(0,0,-.1);
+            patrolCounter++;
+        }else{
+            patrolCounter = 0;
+            patrolRoute = 0;
+        }
+    }
+
 
 
     VkCommandBuffer commandBuffer = mWindow->currentCommandBuffer();
@@ -545,8 +614,6 @@ void RenderWindow::createBuffer(VkDevice logicalDevice,
 
     mDeviceFunctions->vkUnmapMemory(logicalDevice, visualObject->mBufferMemory);
 
-
-
 }
 
 void RenderWindow::pushConstants(QMatrix4x4 modelMatrix, QVector3D color)
@@ -612,7 +679,7 @@ bool RenderWindow::overlapDetection(VisualObject* obj1, VisualObject* obj2) cons
 
 }
 
-void RenderWindow::collisionDetection(VisualObject* obj)
+void RenderWindow::onCollision(VisualObject* obj)
 {
     for(VisualObject* j : mObjects)
     {
@@ -627,13 +694,52 @@ void RenderWindow::collisionDetection(VisualObject* obj)
 
             if(j->getTag() == "enemy")
             {
-                //Disable movement;speed= 0?
                 mVulkanWindow->setObjectMovementSpeed(0.0f);
                 qDebug("You lost");
             }
 
-            if(j->getTag() =="house")
-                 qDebug("Collided with the house");
+            if(j->getTag() == "house" && mIsHouse == true)
+            {
+
+                //Switches out the house with another one and moves the camera
+                mCamera.setPosition(QVector3D(-20.3f,-11.4f,-14.0f));
+                j->move(0,-10,0);
+                qDebug("Collided with the house");
+                mIsHouse = false;
+            }
+            if(j->getTag() == "wall" && j->isOpen == false)
+            {
+                j->rotate(-90,0,1,0);
+
+                j->isOpen = true;
+                qDebug("Collided with the wall");
+            }
+
+        }
+    }
+}
+
+void RenderWindow::onCollisionEnd(VisualObject* obj)
+{
+    for(VisualObject* j : mObjects)
+    {
+        if(j->getTag() != "player" && !(overlapDetection(obj,j)) && j->enableCollision)
+        {
+
+            if(j->getTag() == "wall" && j->isOpen == true)
+            {
+                j->rotate(90,0,1,0);
+                j->isOpen = false;
+                qDebug("stopped colliding with the wall");
+            }
+            if(j->getTag() =="rooflesshouse" && mIsHouse == false)
+            {
+                //Switches out the house with another one and moves the camera
+                mCamera.setPosition(QVector3D(-12.5,-40,-30));
+                mObjects.at(11)->move(0,10,0);
+                qDebug("Collided with the house");
+                mIsHouse = true;
+            }
         }
     }
 }
@@ -645,7 +751,8 @@ VisualObject* RenderWindow::getPlayer() const
         if(obj->getTag() == "player")
             return obj;
         qDebug("No object with mTag 'player' found");
-        return NULL;
+        return mPlayer; // default is nullptr
     }
 }
+
 

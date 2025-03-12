@@ -1,17 +1,16 @@
-#include "box.h"
+#include "wall.h"
 
-box::box(float r, float g, float b) {
-
+wall::wall(float r, float g, float b) {
     drawType = 0; // 0 = fill, 1 = line
 
-    vertex v1{-1,-1,-1, r,g,b};
-    vertex v2{-1,-1,1,  r,g,b};
-    vertex v3{-1,1,-1,  r,g,b};
-    vertex v4{1,1,1,    r,g,b};
-    vertex v5{-1,1,1,   r,g,b};
-    vertex v6{1,-1,1,   r,g,b};
-    vertex v7{1,1,-1,   r,g,b};
-    vertex v8{1,-1,-1,  r,g,b};
+    vertex v1{-.5,-1,-1.5, r,g,b};
+    vertex v2{-.5,-1,1.5,  r,g,b};
+    vertex v3{-.5,1,-1.5,  r,g,b};
+    vertex v4{.5,1,1.5,    r,g,b};
+    vertex v5{-.5,1,1.5,   r,g,b};
+    vertex v6{.5,-1,1.5,   r,g,b};
+    vertex v7{.5,1,-1.5,   r,g,b};
+    vertex v8{.5,-1,-1.5,  r,g,b};
 
     mVertices.push_back(v1);// front
     mVertices.push_back(v3);

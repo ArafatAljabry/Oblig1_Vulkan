@@ -4,7 +4,7 @@
 class box : public VisualObject
 {
 public:
-    box();
+    box(float r, float g, float b);
     ~box(){};
 };
 
