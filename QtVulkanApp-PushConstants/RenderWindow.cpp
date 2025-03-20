@@ -774,8 +774,9 @@ VisualObject* RenderWindow::getPlayer() const
         if(obj->getTag() == "player")
             return obj;
         qDebug("No object with mTag 'player' found");
-        return mPlayer; // default is nullptr
+        return mPlayer;
     }
+    return mPlayer; // default is nullptr
 }
 
 
