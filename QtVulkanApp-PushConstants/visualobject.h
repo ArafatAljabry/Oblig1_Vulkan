@@ -41,6 +41,14 @@ public:
     int drawType{0}; // 0 = fill, 1 = line
 
     QVector3D mColor{0.f,0.f,0.f};
+    inline std::vector<vertex> getVertices() const { return mVertices; }
+    inline std::vector<uint32_t> getIndices() const { return mIndices; }
+
+
+    inline VkBuffer& getIBuffer() { return mIndexBuffer.mBuffer; }
+    inline VkDeviceMemory& getIBufferMemory() { return mIndexBuffer.mBufferMemory; }
+    inline void setIBuffer(VkBuffer bufferIn) { mIndexBuffer.mBuffer = bufferIn; }
+    inline void setIBufferMemory(VkDeviceMemory bufferMemoryIn) { mIndexBuffer.mBufferMemory = bufferMemoryIn; }
 
     //for the door,would be nice on the wall class, to be continued
     bool isOpen{false};
@@ -48,6 +56,7 @@ public:
 protected:
     std::string mName;
     std::string mTag{"actor"};
+    std::vector<uint32_t> mIndices;
 
 };
 

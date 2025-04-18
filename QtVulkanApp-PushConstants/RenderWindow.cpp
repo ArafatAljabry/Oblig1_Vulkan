@@ -415,6 +415,15 @@ void RenderWindow::startNextFrame()
         mDeviceFunctions->vkCmdBindVertexBuffers(commandBuffer, 0, 1, &(*it)->mBuffer, &vbOffset);
         pushConstants(mCamera.cMatrix() * (*it)->mMatrix, (*it)->mColor);
         mDeviceFunctions->vkCmdDraw(commandBuffer, (*it)->mVertices.size(), 1, 0, 0);
+
+        //Check if we have an index buffer - if so, use Indexed draw
+        if ((*it)->getIndices().size() > 0)
+        {
+            mDeviceFunctions->vkCmdBindIndexBuffer(commandBuffer, (*it)->getIBuffer(), 0, VK_INDEX_TYPE_UINT32);
+            mDeviceFunctions->vkCmdDrawIndexed(commandBuffer, (*it)->getIndices().size(), 1, 0, 0, 0); //size == number of indices
+        }
+        else   //No index buffer - use regular draw
+            mDeviceFunctions->vkCmdDraw(commandBuffer, (*it)->getVertices().size(), 1, 0, 0);
     }
     /***************************************/
 

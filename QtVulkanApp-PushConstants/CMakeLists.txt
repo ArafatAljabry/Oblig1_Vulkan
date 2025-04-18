@@ -23,6 +23,7 @@ qt_add_executable(QtVulkanApp
     plane.h plane.cpp
     wall.h wall.cpp
     rooflesshouse.h rooflesshouse.cpp
+    meshobj.h meshobj.cpp
 
 )
 # Define the shader files

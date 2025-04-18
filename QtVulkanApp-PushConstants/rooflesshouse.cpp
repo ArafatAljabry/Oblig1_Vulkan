@@ -12,14 +12,14 @@ rooflessHouse::rooflessHouse(float r, float g, float b) {
     vertex v7{1,1,-1,   r,g,b};
     vertex v8{1,-1,-1,  r,g,b};
 
-    mVertices.push_back(v1);// front
+    mVertices.push_back(v1); // front
     mVertices.push_back(v3);
     mVertices.push_back(v5);
     mVertices.push_back(v5);
     mVertices.push_back(v2);
     mVertices.push_back(v1);
 
-    mVertices.push_back(v2);// right side
+    mVertices.push_back(v2); // right side
     mVertices.push_back(v5);
     mVertices.push_back(v4);
     mVertices.push_back(v4);
@@ -40,8 +40,8 @@ rooflessHouse::rooflessHouse(float r, float g, float b) {
     mVertices.push_back(v3);
     mVertices.push_back(v7);
     /*
-    mVertices.push_back(v3);
-    mVertices.push_back(v7); // top side
+    mVertices.push_back(v3); // top side
+    mVertices.push_back(v7);
     mVertices.push_back(v5);
     mVertices.push_back(v5);
     mVertices.push_back(v4);

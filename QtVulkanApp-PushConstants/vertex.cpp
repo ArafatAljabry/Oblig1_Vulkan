@@ -18,3 +18,17 @@ std::ifstream& operator>>(std::ifstream& is, vertex& v)
 
     return is;
 }
+
+vertex::vertex(QVector3D pos, QVector3D color, QVector2D UV)
+{
+    x = pos.x();
+    y = pos.y();
+    z = pos.z();
+
+    r = color.x();
+    g = color.y();
+    b = color.z();
+
+    u = UV.x();
+    v = UV.y();
+}
