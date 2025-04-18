@@ -39,7 +39,7 @@ TriangleSurface::TriangleSurface(const std::string& filename) : VisualObject()
     for(auto i = 0; i < TotalVertices; i++)
     {
 
-        //Subsequential lines in the file gets added as vertexes.
+        //Subsequent lines in the file gets added as vertexes.
         inn >> v;
         mVertices.push_back(v);
 

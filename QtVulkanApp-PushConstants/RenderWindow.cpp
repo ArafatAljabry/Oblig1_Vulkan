@@ -8,7 +8,7 @@
 #include "rooflesshouse.h"
 #include "wall.h"
 #include <qmath.h>
-
+#include "triangulation.h"
 
 
 // Hardcoded mesh for now. Will be put in its own class soon!
@@ -53,17 +53,21 @@ RenderWindow::RenderWindow(QVulkanWindow *w, bool msaa)
     //mObjects.push_back(new TriangleSurface());
 
 
+    mObjects.push_back(new triangulation());
+    mObjects.at(0)->enableCollision = false;
+/*
     //player
     mPlayer = new box(0,0,0);
     mPlayer->setName("player");
     mPlayer->setTag("player");
     mObjects.push_back(mPlayer);
     mPlayer->move(10,1,20);
-
+*/
 
     /******************************************
      * Scene setup
      ******************************************/
+    /*
     mObjects.push_back(new WorldAxis());
     mObjects.push_back(new plane());
     // !at(0) er spilleren
@@ -137,7 +141,7 @@ RenderWindow::RenderWindow(QVulkanWindow *w, bool msaa)
     mObjects.at(13)->scale(5);
     mObjects.at(13)->radius = 3.6;
 
-
+*/
 
     /******************************************/
 
@@ -365,10 +369,15 @@ void RenderWindow::startNextFrame()
     mCamera.update();               //input can have moved the camera
     //qDebug("%f %f %f %f", mCamera.getPosition().x(),mCamera.getPosition().y(),mCamera.getPosition().z(), mCamera.getPitch());
     //collision detection
-    onCollision(mPlayer);
-    onCollisionEnd(mPlayer);
+    if(mPlayer != nullptr)
+    {
+        onCollision(mPlayer);
+        onCollisionEnd(mPlayer);
+    }
+
 
     /* NPC patrolling*/
+    /*
     if(patrolRoute == 0)
     {
 
@@ -396,7 +405,7 @@ void RenderWindow::startNextFrame()
         }
     }
 
-
+*/
 
     VkCommandBuffer commandBuffer = mWindow->currentCommandBuffer();
 
@@ -736,6 +745,8 @@ void RenderWindow::onCollision(VisualObject* obj)
         }
     }
 }
+
+
 
 void RenderWindow::onCollisionEnd(VisualObject* obj)
 {
